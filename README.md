@@ -4,6 +4,7 @@ by bomi kang, duke
 The process has two parts: one in Bash and one in Python.
 
 In the Bash script, we grab paper-level data from OpenAlex using AWS, download it, and unzip the files.
+
 In Python, we take those unzipped files, pull out the info we need, and organize it for analysis.
 
 
