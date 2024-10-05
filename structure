@@ -1,0 +1,118 @@
+import os
+import json
+import pandas as pd
+from datetime import datetime
+
+# Main directory containing subfolders with JSON files
+main_directory_path = '/cwork/bk203/openalex'
+
+# Function to process each file (handles JSON Lines format)
+def process_file(file_path, output_directory, updated_date):
+    print(f"[{datetime.now()}] Processing file: {file_path}")
+
+    # List to store processed data
+    structured_data = []
+
+    # Open the file and read it line by line (assuming JSON Lines format)
+    with open(file_path, 'r') as file:
+        for line in file:
+            try:
+                data = json.loads(line)  # Parse each line as an individual JSON object
+                authorships_cleaned = clean_authorships(data.get("authorships", []))
+                
+                # Extract relevant fields, providing default values if keys are missing
+                structured_entry = {
+                    "id": data.get("id"),
+                    "title": data.get("title"),
+                    "publication_year": data.get("publication_year", None),
+                    "publication_date": data.get("publication_date", None),
+                    "cited_by_count": data.get("cited_by_count", 0),
+                    "authorships": data.get("authorships", []),
+                    "locations": data.get("locations", []),
+                    "abstract_inverted_index": data.get("abstract_inverted_index", None),
+                    "keywords": data.get("keywords", []),
+                    "journal_id": None,  # To be filled later
+                    "journal": None,     # To be filled later
+                    "up_journal_id": None,  # To be filled later
+                    "up_journal": None      # To be filled later
+                }
+                
+                # Extract journal-related information from locations if available
+                if structured_entry['locations'] and len(structured_entry['locations']) > 0:
+                    location_info = structured_entry['locations'][0]
+                    source_info = location_info.get('source')
+                    
+                    if source_info:
+                        structured_entry['journal_id'] = source_info.get('id')
+                        structured_entry['journal'] = source_info.get('display_name')
+                        structured_entry['up_journal_id'] = source_info.get('host_organization')
+                        structured_entry['up_journal'] = source_info.get('host_organization_name')
+                
+                structured_data.append(structured_entry)
+            except json.JSONDecodeError:
+                print(f"[{datetime.now()}] Skipping invalid JSON in {file_path}")
+
+    # Convert to pandas DataFrame
+    print(f"[{datetime.now()}] Converting to DataFrame...")
+    df = pd.DataFrame(structured_data)
+    
+    # Ensure publication year exists and filter rows where publication_year > 2004
+    if 'publication_year' in df.columns:
+        df_filtered = df[df['publication_year'] > 2004]
+    else:
+        print(f"[{datetime.now()}] 'publication_year' not found. Skipping filter.")
+        df_filtered = df  # No filtering if the column is missing
+
+    # Drop locations column
+    df_filtered = df_filtered.drop(columns=['locations'], errors='ignore')
+
+    # Create the cleaned file name, appending the updated date -- otherwise it gets overwritten
+    original_file_name = os.path.basename(file_path)
+    cleaned_file_name = f"{original_file_name.split('.')[0]}_{updated_date}.csv"
+    output_file = os.path.join(output_directory, cleaned_file_name)
+
+    # Save
+    df_filtered.to_csv(output_file, index=False)
+    print(f"[{datetime.now()}] Finished processing file: {file_path}")
+
+# Function to get rid of unnecessary information from authorships
+def clean_authorships(authorships):
+    if not authorships:
+        return None
+    for author in authorships:
+        if 'raw_affiliation_strings' in author:
+            del author['raw_affiliation_strings']
+        if 'raw_affiliation_string' in author:
+            del author['raw_affiliation_string']
+        if 'author' in author and 'orcid' in author['author']:
+            del author['author']['orcid']
+    return authorships
+
+# Main function to iterate over all subfolders and files
+def process_all_files_in_subfolders(main_directory_path, output_directory):
+    if not os.path.exists(output_directory):
+        os.makedirs(output_directory)
+
+    # Iterate through each subfolder in the main directory
+    for subfolder_name in os.listdir(main_directory_path):
+        subfolder_path = os.path.join(main_directory_path, subfolder_name)
+
+        # Check if it's a directory (ignores files)
+        if os.path.isdir(subfolder_path) and subfolder_name.startswith('updated_date='):
+            updated_date = subfolder_name.split('=')[1]  # Extract the updated date
+            print(f"[{datetime.now()}] Processing subfolder: {subfolder_name}")
+            
+            # List files in the subfolder for debugging
+            files_in_subfolder = os.listdir(subfolder_path)
+            print(f"[{datetime.now()}] Files in subfolder {subfolder_name}: {files_in_subfolder}")
+
+            for filename in files_in_subfolder:
+                if filename.startswith('part_'):  # Process only files with 'part_' prefix
+                    file_path = os.path.join(subfolder_path, filename)
+                    process_file(file_path, output_directory, updated_date)
+
+# Define the output directory
+output_directory = '/cwork/bk203/cleaned_files'
+
+# Run the batch processing for all files in all subfolders
+process_all_files_in_subfolders(main_directory_path, output_directory)
