@@ -31,10 +31,10 @@ def process_file(file_path, output_directory, updated_date):
                     "locations": data.get("locations", []),
                     "abstract_inverted_index": data.get("abstract_inverted_index", None),
                     "keywords": data.get("keywords", []),
-                    "journal_id": None,  # To be filled later
-                    "journal": None,     # To be filled later
-                    "up_journal_id": None,  # To be filled later
-                    "up_journal": None      # To be filled later
+                    "journal_id": None, 
+                    "journal": None,   
+                    "up_journal_id": None,  
+                    "up_journal": None 
                 }
                 
                 # Extract journal-related information from locations if available
