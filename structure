@@ -4,7 +4,7 @@ import pandas as pd
 from datetime import datetime
 
 # Main directory containing subfolders with JSON files
-main_directory_path = '/cwork/bk203/openalex'
+main_directory_path = '/cwork/bk203/openalex-snapshot/data/works'
 
 # Function to process each file (handles JSON Lines format)
 def process_file(file_path, output_directory, updated_date):
