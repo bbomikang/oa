@@ -88,7 +88,7 @@ def append_all_csv_files(output_directory, final_csv_path):
 
 # Define the output directory
 output_directory = '/cwork/bk203/cleaned_files_institutions'
-final_csv_path = '/cwork/bk203/cleaned_files_institutions/final_combined.csv'
+final_csv_path = '/cwork/bk203/cleaned_files_institutions/institutions_geo_all.csv'
 
 # Run the batch processing for all files in all subfolders
 process_all_files_in_subfolders(main_directory_path, output_directory)
