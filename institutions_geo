@@ -23,6 +23,7 @@ def process_file(file_path, output_directory, updated_date, log_file):
                     geo_data = data.get("geo", {})
                     structured_entry = {
                         "id": data.get("id"),
+                        "name": data.get("display_name"),
                         "city": geo_data.get("city"),
                         "region": geo_data.get("region"),
                         "country": geo_data.get("country"),
