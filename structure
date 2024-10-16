@@ -29,15 +29,16 @@ def process_file(file_path, output_directory, updated_date):
                     "cited_by_count": data.get("cited_by_count", 0),
                     "authorships": data.get("authorships", []),
                     "locations": data.get("locations", []),
+                    "grants": data.get("grants", []),
                     "abstract_inverted_index": data.get("abstract_inverted_index", None),
                     "keywords": data.get("keywords", []),
-                    "journal_id": None, 
-                    "journal": None,   
-                    "up_journal_id": None,  
-                    "up_journal": None 
+                    "journal_id": None,  # To be filled later
+                    "journal": None,     # To be filled later
+                    "up_journal_id": None,  # To be filled later
+                    "up_journal": None      # To be filled later
                 }
                 
-                # Extract journal-related information from locations if available
+                # Extract journal-related information from 'locations' if available
                 if structured_entry['locations'] and len(structured_entry['locations']) > 0:
                     location_info = structured_entry['locations'][0]
                     source_info = location_info.get('source')
@@ -56,26 +57,26 @@ def process_file(file_path, output_directory, updated_date):
     print(f"[{datetime.now()}] Converting to DataFrame...")
     df = pd.DataFrame(structured_data)
     
-    # Ensure publication year exists and filter rows where publication_year > 2004
+    # Ensure 'publication_year' exists and filter rows where publication_year > 2004
     if 'publication_year' in df.columns:
         df_filtered = df[df['publication_year'] > 2004]
     else:
         print(f"[{datetime.now()}] 'publication_year' not found. Skipping filter.")
         df_filtered = df  # No filtering if the column is missing
 
-    # Drop locations column
+    # Drop the 'locations' column
     df_filtered = df_filtered.drop(columns=['locations'], errors='ignore')
 
-    # Create the cleaned file name, appending the updated date -- otherwise it gets overwritten
+    # Create the cleaned file name, appending the updated date
     original_file_name = os.path.basename(file_path)
     cleaned_file_name = f"{original_file_name.split('.')[0]}_{updated_date}.csv"
     output_file = os.path.join(output_directory, cleaned_file_name)
 
-    # Save
+    # Save to CSV
     df_filtered.to_csv(output_file, index=False)
     print(f"[{datetime.now()}] Finished processing file: {file_path}")
 
-# Function to get rid of unnecessary information from authorships
+# Function to clean 'raw_affiliation_strings', 'raw_affiliation_string', and 'orcid' from 'authorships'
 def clean_authorships(authorships):
     if not authorships:
         return None
